@@ -1,6 +1,6 @@
 # Shadow_detection_and_removal
 # Shadow Detection and Removal System
-
+## OUTPUT
 ![Sample Results](results/metrics_evaluation.png)
 ![shadow_detected](https://github.com/user-attachments/assets/67ea42e3-06ae-4ae2-a8ac-e0a6940cc24a)
 ![shadow_mask](https://github.com/user-attachments/assets/65c287ca-3d4c-4a5f-81fb-9d2ffb9240e6)
