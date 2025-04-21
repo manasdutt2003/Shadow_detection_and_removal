@@ -36,7 +36,7 @@ git clone https://github.com/yourusername/shadow-removal.git
 cd shadow-removal
 pip install -r requirements.txt
 
-DATASET PREPARATION: 
+## DATASET PREPARATION: 
 data/ISTD_dataset/
     ├── train/
     │   ├── A/  # Shadow images
@@ -47,23 +47,23 @@ data/ISTD_dataset/
         ├── B/
         └── C/
         
-TRAINING: 
+## TRAINING: 
 python main.py train \
     --data_path data/ISTD_dataset \
     --batch_size 8 \
     --epochs 20 \
     --lr 1e-4
     
-EVALUATION:
+## EVALUATION:
 python main.py evaluate \
     --model_path checkpoints/best_model.pth \
     --data_path data/ISTD_dataset \
     --batch_size 8
     
-Inference on Single Image:
+## Inference on Single Image:
 python predict.py --image_path path/to/your/image.jpg
 
-PROJECT STRUCTURE:
+## PROJECT STRUCTURE:
 ├── models/
 │   ├── shadow_desdnet.py       # Shadow detection network
 │   ├── shadow_removal.py       # Shadow removal network
@@ -78,7 +78,7 @@ PROJECT STRUCTURE:
 ├── results/                    # Output visualizations
 └── logs/                       # Training logs
 
-RESULTS:
+## RESULTS:
 The system achieves the following metrics on the ISTD test set:
 
 Metric	Score
@@ -87,16 +87,16 @@ Precision	0.91
 Recall	0.89
 F1 Score	0.90
 
-Pretrained Models:
+## Pretrained Models:
 Download pretrained models from Releases and place them in the checkpoints/ director
 
-Contributing:
+## Contributing:
 Contributions are welcome! Please open an issue or submit a pull request.
 
-License:
+## License:
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-Citation: 
+## Citation: 
 If you use this code in your research, please cite:
 
 bibtex
@@ -109,7 +109,7 @@ bibtex
   howpublished = {\url{https://github.com/yourusername/shadow-removal}}
 }
 
-Acknowledgments:
+## Acknowledgments:
 ISTD dataset providers
 
 PyTorch community
