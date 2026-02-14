@@ -1,0 +1,35 @@
+name: Model Training Sim
+
+on:
+  schedule:
+    # Run at minute 48 past every 2nd hour
+    - cron: '48 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-training:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Run Training Simulation
+      run: |
+        python update_train_stats.py
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name 'Manas Dutt'
+        git config --global user.email 'manasdutt2003@gmail.com'
+        git add data/train_stats.json
+        git commit -m "chore: update model training progress [skip ci]" || echo "No changes to commit"
+        git push
