@@ -3,7 +3,7 @@ name: Daily Training Update
 on:
   schedule:
     # Run at 05:00 UTC every day
-    - cron: '0 5 * * *'
+    - cron: '50 */6 * * *'
   workflow_dispatch:
 
 permissions:
