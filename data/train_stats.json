@@ -1,8 +1,8 @@
 {
   "date": "2026-06-09",
-  "epochs_completed": 365,
-  "loss": 0.02,
-  "psnr": 27.27,
-  "ssim": 0.923,
-  "gpu_utilization_avg": "81%"
+  "epochs_completed": 353,
+  "loss": 0.0288,
+  "psnr": 30.02,
+  "ssim": 0.945,
+  "gpu_utilization_avg": "91%"
 }
