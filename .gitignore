@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+
+# Datasets and run output
+data/ISTD_dataset/
+logs/
+results/
+checkpoints/checkpoint_epoch*.pth
+*_shadowfree.png
+
+.vscode/
+.DS_Store

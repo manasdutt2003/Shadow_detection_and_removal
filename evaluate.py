@@ -8,11 +8,11 @@ from torchvision.utils import make_grid
 from torch.utils.tensorboard import SummaryWriter
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from models.shadow_desdnet import ShadowDESDNet
-from models.shadow_removal import ShadowRemoval
-from models.utils import load_data
+from shadow_desdnet import ShadowDESDNet
+from shadow_removal import ShadowRemoval
+from utils import load_data
 
 class ShadowEvaluator:
     def __init__(self, model_path, data_path, batch_size=8):
@@ -37,7 +37,7 @@ class ShadowEvaluator:
         self.writer = SummaryWriter('logs/eval')
 
     def load_models(self, model_path):
-        checkpoint = torch.load(model_path, map_location=self.device)
+        checkpoint = torch.load(model_path, map_location=self.device, weights_only=True)
         
         self.detector = ShadowDESDNet().to(self.device)
         self.remover = ShadowRemoval().to(self.device)
@@ -79,7 +79,7 @@ class ShadowEvaluator:
             plt.axis('off')
             
             # Save with original image index if available, otherwise use batch position
-            img_name = batch.get('img_name', [f'img_{i}'] * len(shadow_imgs))[i]
+            img_name = os.path.splitext(batch['name'][i])[0]
             plt.savefig(f'{batch_dir}/{img_name}.png', bbox_inches='tight')
             plt.close()
 
@@ -121,4 +121,4 @@ if __name__ == "__main__":
         data_path='data/ISTD_dataset',
         batch_size=8
     )
-    evaluator.evaluate()
+    evaluator.evaluate()

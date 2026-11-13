@@ -7,7 +7,10 @@ from PIL import Image
 class ISTDDataset(Dataset):
     def __init__(self, root_dir, phase='train'):
         self.root_dir = os.path.join(root_dir, phase)
-        self.image_files = [f for f in os.listdir(os.path.join(self.root_dir, 'A')) if f.endswith('.png')]
+        self.image_files = sorted(
+            f for f in os.listdir(os.path.join(self.root_dir, 'A'))
+            if f.lower().endswith(('.png', '.jpg', '.jpeg'))
+        )
         
         # Image transforms (for both shadow and shadow-free images)
         self.image_transform = transforms.Compose([
@@ -38,13 +41,13 @@ class ISTDDataset(Dataset):
             'name': img_name
         }
 
-def load_data(data_path, phase='train', batch_size=4, shuffle=True):
+def load_data(data_path, phase='train', batch_size=4, shuffle=True, num_workers=4):
     dataset = ISTDDataset(data_path, phase=phase)
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=shuffle,
-        num_workers=4,
+        num_workers=num_workers,
         pin_memory=True if torch.cuda.is_available() else False
     )
-    return loader
+    return loader

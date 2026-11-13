@@ -2,18 +2,19 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.cuda.amp import GradScaler, autocast
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from models.shadow_desdnet import ShadowDESDNet
-from models.shadow_removal import ShadowRemoval
-from models.utils import load_data
+from shadow_desdnet import ShadowDESDNet
+from shadow_removal import ShadowRemoval
+from utils import load_data
 
 class ShadowTrainer:
+    ACCUMULATE = 2  # batches per optimizer step
+
     def __init__(self, data_path, batch_size=4, epochs=20, lr=1e-4):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.batch_size = batch_size
@@ -27,12 +28,15 @@ class ShadowTrainer:
         self.opt_det = optim.Adam(self.detector.parameters(), lr=lr, weight_decay=1e-5)
         self.opt_rem = optim.Adam(self.remover.parameters(), lr=lr, weight_decay=1e-5)
         
-        # Loss functions
-        self.criterion_det = nn.BCEWithLogitsLoss()
+        # Loss functions. The detector already ends in a sigmoid, so the mask
+        # loss is plain BCE on probabilities (BCEWithLogitsLoss would apply a
+        # second sigmoid and flatten the gradients).
+        self.criterion_det = nn.BCELoss()
         self.criterion_rem = nn.L1Loss()
         
         # Mixed precision training
-        self.scaler = GradScaler()
+        self.use_amp = self.device.type == 'cuda'
+        self.scaler = torch.amp.GradScaler('cuda', enabled=self.use_amp)
         
         # Data loaders
         self.train_loader = load_data(data_path, 'train', batch_size)
@@ -56,21 +60,24 @@ class ShadowTrainer:
             shadow_mask = batch['shadow_mask'].to(self.device, non_blocking=True)
             shadow_free = batch['shadow_free'].to(self.device, non_blocking=True)
             
-            with autocast():
-                # Forward passes
+            with torch.autocast(device_type=self.device.type, enabled=self.use_amp):
                 pred_mask = self.detector(shadow_img)
                 pred_free = self.remover(shadow_img, pred_mask.detach())
-                
-                # Loss calculation
-                loss_det = self.criterion_det(pred_mask, shadow_mask)
-                loss_rem = self.criterion_rem(pred_free, shadow_free)
-                loss = loss_det + loss_rem
+
+            # BCE on probabilities is not safe in half precision, so the
+            # losses are computed in float32 outside the autocast block.
+            loss_det = self.criterion_det(pred_mask.float(), shadow_mask)
+            loss_rem = self.criterion_rem(pred_free.float(), shadow_free)
+            loss = loss_det + loss_rem
             
             # Backpropagation
-            self.scaler.scale(loss).backward()
+            # Each optimizer step covers ACCUMULATE batches, so scale the loss
+            # to keep the effective learning rate unchanged.
+            self.scaler.scale(loss / self.ACCUMULATE).backward()
             
             # Gradient accumulation
-            if (batch_idx + 1) % 2 == 0:
+            last_batch = batch_idx + 1 == len(self.train_loader)
+            if (batch_idx + 1) % self.ACCUMULATE == 0 or last_batch:
                 self.scaler.step(self.opt_det)
                 self.scaler.step(self.opt_rem)
                 self.scaler.update()
@@ -85,7 +92,6 @@ class ShadowTrainer:
             
             # Memory cleanup
             del shadow_img, shadow_mask, shadow_free, pred_mask, pred_free
-            torch.cuda.empty_cache()
             
         return total_loss / len(self.train_loader)
 
@@ -108,8 +114,6 @@ class ShadowTrainer:
                 total_loss += loss.item()
                 
                 # Cleanup
-                del shadow_img, shadow_mask, shadow_free, pred_mask, pred_free
-                torch.cuda.empty_cache()
                 
         avg_loss = total_loss / len(self.val_loader)
         self.writer.add_scalar('Loss/val', avg_loss, epoch)

@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from models.shadow_desdnet import ShadowDESDNet
-from models.shadow_removal import ShadowRemoval
-from models.utils import load_data
+from shadow_desdnet import ShadowDESDNet
+from shadow_removal import ShadowRemoval
+from utils import load_data
 
 class MetricEvaluator:
     def __init__(self, model_path='checkpoints/best_model.pth'):
@@ -18,7 +18,7 @@ class MetricEvaluator:
         self.load_models(model_path)
         
     def load_models(self, model_path):
-        checkpoint = torch.load(model_path, map_location=self.device)
+        checkpoint = torch.load(model_path, map_location=self.device, weights_only=True)
         self.detector = ShadowDESDNet().to(self.device)
         self.remover = ShadowRemoval().to(self.device)
         self.detector.load_state_dict(checkpoint['detector_state'])
@@ -118,4 +118,4 @@ def main():
 
 if __name__ == "__main__":
     os.makedirs('results', exist_ok=True)
-    main()
+    main()

@@ -39,12 +39,17 @@ def load_models(checkpoint_path):
         detector = ShadowDESDNet().to(device)
         remover = ShadowRemoval().to(device)
         
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
         detector.load_state_dict(checkpoint['detector_state'])
         remover.load_state_dict(checkpoint['remover_state'])
         
         detector.eval()
         remover.eval()
+        
+        # create_dummy_weights.py writes epoch 0 / best_iou 0.0 and no
+        # optimizer state. Such a checkpoint holds random weights.
+        if checkpoint.get('epoch') == 0 and 'opt_det_state' not in checkpoint:
+            return detector, remover, 'untrained'
         
         return detector, remover, None
     except Exception as e:
@@ -89,6 +94,14 @@ if uploaded_file is not None:
     # Load models
     detector, remover, error = load_models(model_path)
     
+    if error == 'untrained':
+        st.warning(
+            "This checkpoint contains untrained (random) weights, so the mask and "
+            "output below are noise. Train the model with `python main.py train` "
+            "and point the sidebar at the resulting checkpoint."
+        )
+        error = None
+
     if error:
         st.warning(f"⚠️ Model weights missing or invalid.\n\n{error}")
         st.info("Please ensure 'checkpoints/best_model.pth' is present in the repository or upload it if supported.")
@@ -101,7 +114,7 @@ if uploaded_file is not None:
             
         with col2:
             st.subheader("Detected Shadow Mask")
-            st.image(mask, use_container_width=True, cmap='gray')
+            st.image(mask, use_container_width=True, clamp=True)
             
         with col3:
             st.subheader("Shadow Removed")

@@ -4,9 +4,9 @@ from PIL import Image
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from models.shadow_desdnet import ShadowDESDNet
-from models.shadow_removal import ShadowRemoval
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from shadow_desdnet import ShadowDESDNet
+from shadow_removal import ShadowRemoval
 
 def remove_shadow(image_path, model_path='checkpoints/best_model.pth'):
     # Load models
@@ -14,7 +14,7 @@ def remove_shadow(image_path, model_path='checkpoints/best_model.pth'):
     detector = ShadowDESDNet().to(device)
     remover = ShadowRemoval().to(device)
     
-    checkpoint = torch.load(model_path, map_location=device)
+    checkpoint = torch.load(model_path, map_location=device, weights_only=True)
     detector.load_state_dict(checkpoint['detector_state'])
     remover.load_state_dict(checkpoint['remover_state'])
     
@@ -48,4 +48,4 @@ if __name__ == "__main__":
     parser.add_argument('--model_path', default='checkpoints/best_model.pth')
     args = parser.parse_args()
     
-    remove_shadow(args.image_path, args.model_path)
+    remove_shadow(args.image_path, args.model_path)
