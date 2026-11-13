@@ -1,9 +1,6 @@
 name: Model Training Sim
 
 on:
-  schedule:
-    # Run at minute 48 past every 2nd hour
-    - cron: '48 */2 * * *'
   workflow_dispatch:
 
 permissions:
